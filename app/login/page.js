@@ -1,46 +1,47 @@
-"use client"
+"use client";
 
-import React, { useState } from 'react'
-import toast from 'react-hot-toast';
-import { redirect, useRouter, useSearchParams } from 'next/navigation';
-import { signIn } from 'next-auth/react';
+import React, { useState, useEffect } from "react";
+import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import GitHubIcon from "@mui/icons-material/GitHub";
-import Head from 'next/head';
+import Head from "next/head";
 
 export default function LoginPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [callbackUrl, setCallbackUrl] = useState("/");
+  const router = useRouter();
 
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState("");
-    const [loading, setLoading] = useState(false);
-    const router = useRouter();
+  useEffect(() => {
+    // Only run in the browser, ensure searchParams are available
+    const searchParams = new URLSearchParams(window.location.search);
+    const urlCallback = searchParams.get("callbackUrl");
+    setCallbackUrl(urlCallback || "/");
+  }, []);
 
-    const searchParams = useSearchParams();
-    const callbackUrl = searchParams.get("callbackUrl" || "/");
-    console.log(callbackUrl);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
 
+    const result = await signIn("credentials", {
+      redirect: false,
+      email,
+      password,
+    });
 
-    const handleSubmit= async (e)=>{
-       e.preventDefault();
-       setLoading(true);
-        
-       const result = await signIn("credentials", {
-        redirect:false,
-        email,
-        password,
-       });
+    setLoading(false);
 
-       setLoading(false);
-
-       if(!result.ok){
-        toast.error(result?.error);
-       }
-       else{
-        toast.success("Login Success!");
-        router.push("/dashboard");
-       }
-
-       router.push(callbackUrl);
+    if (!result.ok) {
+      toast.error(result?.error);
+    } else {
+      toast.success("Login Success!");
+      router.push("/dashboard");
     }
+
+    router.push(callbackUrl);
+  };
 
   return (
     <>
@@ -132,4 +133,3 @@ export default function LoginPage() {
     </>
   );
 }
-
